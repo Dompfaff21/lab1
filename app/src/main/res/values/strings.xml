@@ -1,0 +1,11 @@
+<resources>
+    <string name="btn_language">RU</string>
+    <string name="app_name">Calculator</string>
+    <string name="hint_side1">Width</string>
+    <string name="hint_side2">Length</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_calculate">Calculate</string>
+    <string name="toast_fill_fields">Fill both fields</string>
+    <string name="toast_invalid_number">Invalid number format</string>
+    <string name="side_display">Width: %.0f, Length: %.0f</string>
+</resources>

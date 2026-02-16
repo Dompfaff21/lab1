@@ -1,11 +1,11 @@
 <resources>
     <string name="btn_language">EN</string>
     <string name="app_name">Калькулятор</string>
-    <string name="hint_side1">Ширина</string>
-    <string name="hint_side2">Длина</string>
+    <string name="hint_latitude">Широта</string>
+    <string name="hint_longitude">Долгота</string>
     <string name="btn_save">Сохранить</string>
-    <string name="btn_calculate">Расчёт</string>
+    <string name="btn_calculate">Вычислить</string>
     <string name="toast_fill_fields">Заполните оба поля</string>
-    <string name="toast_invalid_number">Некорректный формат числа</string>
-    <string name="side_display">Ширина: %.0f, Длина: %.0f</string>
+    <string name="toast_invalid_number">Неверный формат числа</string>
+    <string name="side_display">Широта: %.6f, Долгота: %.6f</string>
 </resources>

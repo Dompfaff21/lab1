@@ -23,8 +23,8 @@ class SidesAdapter(private val sides: MutableList<SidePair>) :
         val sidePair = sides[position]
         holder.Sides.text = holder.itemView.context.getString(
             R.string.side_display,
-            sidePair.width,
-            sidePair.length
+            sidePair.latitude,
+            sidePair.longitude
         )
     }
 

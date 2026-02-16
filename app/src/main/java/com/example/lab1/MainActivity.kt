@@ -1,21 +1,28 @@
 package com.example.lab1
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.os.LocaleListCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var widthEditText: EditText
-    private lateinit var lengthEditText: EditText
+    private lateinit var latitudeEditText: EditText
+    private lateinit var longitudeEditText: EditText
     private lateinit var btnSave: Button
     private lateinit var btnCalculate: Button
     private lateinit var btnChangeLanguage: Button
@@ -27,6 +34,10 @@ class MainActivity : AppCompatActivity() {
     private val SIDES_KEY = "sides_list"
     private val PREFS_NAME = "app_prefs"
     private val LANGUAGE_KEY = "language"
+
+    // Для геолокации
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private val LOCATION_PERMISSION_REQUEST_CODE = 100
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
@@ -49,8 +60,8 @@ class MainActivity : AppCompatActivity() {
         loadLanguage()
         setContentView(R.layout.activity_main)
 
-        widthEditText = findViewById(R.id.Width)
-        lengthEditText = findViewById(R.id.Length)
+        latitudeEditText = findViewById(R.id.latitude)
+        longitudeEditText = findViewById(R.id.longitude)
         btnSave = findViewById(R.id.btnSave)
         btnCalculate = findViewById(R.id.btnCalculate)
         btnChangeLanguage = findViewById(R.id.btnChangeLanguage)
@@ -60,33 +71,86 @@ class MainActivity : AppCompatActivity() {
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
 
-        btnSave.setOnClickListener {
-            val side1Str = widthEditText.text.toString()
-            val side2Str = lengthEditText.text.toString()
+        // Инициализация клиента геолокации
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-            if (side1Str.isEmpty() || side2Str.isEmpty()) {
+        // Запрос геопозиции при старте
+        requestLocationAndUpdateFields()
+
+        btnSave.setOnClickListener {
+            val latStr = latitudeEditText.text.toString()
+            val lonStr = longitudeEditText.text.toString()
+
+            if (latStr.isEmpty() || lonStr.isEmpty()) {
                 Toast.makeText(this, getString(R.string.toast_fill_fields), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             try {
-                val side1 = side1Str.toDouble()
-                val side2 = side2Str.toDouble()
-                val sidePair = SidePair(side1, side2)
+                val lat = latStr.toDouble()
+                val lon = lonStr.toDouble()
+                val sidePair = SidePair(lat, lon)  // порядок важен: сначала широта, потом долгота
                 adapter.addSidePair(sidePair)
-                widthEditText.text.clear()
-                lengthEditText.text.clear()
+                latitudeEditText.text.clear()
+                longitudeEditText.text.clear()
             } catch (_: NumberFormatException) {
                 Toast.makeText(this, getString(R.string.toast_invalid_number), Toast.LENGTH_SHORT).show()
             }
         }
 
         btnCalculate.setOnClickListener {
-
+            // здесь остаётся логика расчёта, если она нужна
         }
 
         btnChangeLanguage.setOnClickListener {
             toggleLanguage()
+        }
+    }
+
+    private fun requestLocationAndUpdateFields() {
+        when {
+            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED -> {
+                getLastLocation()
+            }
+            else -> {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                    LOCATION_PERMISSION_REQUEST_CODE
+                )
+            }
+        }
+    }
+
+    private fun getLastLocation() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return
+        }
+        fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+            location?.let {
+                // Заполняем поля: широта в latitude, долгота в longitude
+                latitudeEditText.setText(it.latitude.toString())
+                longitudeEditText.setText(it.longitude.toString())
+            } ?: run {
+                Toast.makeText(this, "Не удалось получить местоположение", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            LOCATION_PERMISSION_REQUEST_CODE -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    getLastLocation()
+                } else {
+                    Toast.makeText(this, "Разрешение на геолокацию отклонено", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 

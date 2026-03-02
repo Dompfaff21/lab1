@@ -7,5 +7,7 @@
     <string name="btn_calculate">Calculate</string>
     <string name="toast_fill_fields">Fill both fields</string>
     <string name="toast_invalid_number">Invalid number format</string>
-    <string name="side_display">Lat: %.6f, Lon: %.6f</string>
+    <string name="side_display">Lat: %.7f, Lon: %.7f</string>
+    <string name="location_unavailable">Location unavailable</string>
+    <string name="permission_denied">Permission denied</string>
 </resources>

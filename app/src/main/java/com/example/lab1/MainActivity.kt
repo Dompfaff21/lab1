@@ -1,5 +1,4 @@
 package com.example.lab1
-
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -14,9 +13,13 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.os.LocaleListCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.location.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
@@ -26,14 +29,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnSave: Button
     private lateinit var btnCalculate: Button
     private lateinit var btnChangeLanguage: Button
+
+    private lateinit var btnClearAll: Button
     private lateinit var recyclerView: RecyclerView
 
     private val sides = mutableListOf<SidePair>()
     private lateinit var adapter: SidesAdapter
-
-    private val SIDES_KEY = "sides_list"
-    private val PREFS_NAME = "app_prefs"
-    private val LANGUAGE_KEY = "language"
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationRequest: LocationRequest
@@ -42,26 +43,27 @@ class MainActivity : AppCompatActivity() {
     private val LOCATION_PERMISSION_REQUEST_CODE = 100
     private var isLocationUpdatesActive = false
 
-
-
-    private lateinit var dbHelper: DatabaseHelper
-
+    // Room database
+    private lateinit var database: AppDatabase
+    private lateinit var dao: CoordinateDao
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         loadLanguage()
         setContentView(R.layout.activity_main)
 
-        dbHelper = DatabaseHelper(this)
+        // Инициализация Room
+        database = AppDatabase.getInstance(this)
+        dao = database.coordinateDao()
 
-        sides.clear()
-        sides.addAll(dbHelper.getAllCoordinates())
+        loadCoordinatesFromDatabase()
 
         latitudeEditText = findViewById(R.id.latitude)
         longitudeEditText = findViewById(R.id.longitude)
         btnSave = findViewById(R.id.btnSave)
         btnCalculate = findViewById(R.id.btnCalculate)
         btnChangeLanguage = findViewById(R.id.btnChangeLanguage)
+        btnClearAll = findViewById(R.id.btnClearAll)
         recyclerView = findViewById(R.id.recyclerView)
 
         adapter = SidesAdapter(sides)
@@ -70,8 +72,8 @@ class MainActivity : AppCompatActivity() {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000)
-            .setMinUpdateIntervalMillis(5000)
+        locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000)
+            .setMinUpdateIntervalMillis(10000)
             .build()
 
         locationCallback = object : LocationCallback() {
@@ -96,14 +98,14 @@ class MainActivity : AppCompatActivity() {
             try {
                 val lat = latStr.toDouble()
                 val lon = lonStr.toDouble()
-                val id = dbHelper.insertCoordinate(lat, lon)
-                if (id != -1L) {
-                    val sidePair = SidePair(lat, lon)
-                    adapter.addSidePair(sidePair)
+
+                lifecycleScope.launch {
+                    withContext(Dispatchers.IO) {
+                        dao.insert(Coordinate(latitude = lat, longitude = lon))
+                    }
+                    loadCoordinatesFromDatabase()
                     latitudeEditText.text.clear()
                     longitudeEditText.text.clear()
-                } else {
-                    Toast.makeText(this, "Ошибка сохранения в БД", Toast.LENGTH_SHORT).show()
                 }
             } catch (_: NumberFormatException) {
                 Toast.makeText(this, getString(R.string.toast_invalid_number), Toast.LENGTH_SHORT).show()
@@ -116,6 +118,39 @@ class MainActivity : AppCompatActivity() {
 
         btnChangeLanguage.setOnClickListener {
             toggleLanguage()
+        }
+
+        btnClearAll.setOnClickListener {
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Очистить все")
+                .setMessage("Вы уверены, что хотите удалить все координаты?")
+                .setPositiveButton("Да") { _, _ ->
+                    lifecycleScope.launch {
+                        withContext(Dispatchers.IO) {
+                            dao.deleteAll()
+                        }
+                        loadCoordinatesFromDatabase()
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Все записи удалены",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+                .setNegativeButton("Нет", null)
+                .show()
+        }
+    }
+
+    private fun loadCoordinatesFromDatabase() {
+        lifecycleScope.launch {
+            val coordinates = withContext(Dispatchers.IO) {
+                dao.getAll()
+            }
+            sides.clear()
+            // Преобразуем Coordinate в SidePair (можно использовать map)
+            sides.addAll(coordinates.map { SidePair(it.latitude, it.longitude) })
+            adapter.notifyDataSetChanged()
         }
     }
 
@@ -236,6 +271,7 @@ class MainActivity : AppCompatActivity() {
         btnChangeLanguage.setText(R.string.btn_language)
         btnSave.setText(R.string.btn_save)
         btnCalculate.setText(R.string.btn_calculate)
+        btnClearAll.setText(R.string.btn_clear_all)
 
         latitudeEditText.hint = getString(R.string.hint_latitude)
         longitudeEditText.hint = getString(R.string.hint_longitude)
@@ -243,12 +279,8 @@ class MainActivity : AppCompatActivity() {
         adapter.notifyDataSetChanged()
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-    }
-
-    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
-        super.onRestoreInstanceState(savedInstanceState)
+    companion object {
+        private const val PREFS_NAME = "app_prefs"
+        private const val LANGUAGE_KEY = "language"
     }
 }
-

@@ -4,6 +4,7 @@
     <string name="hint_latitude">Latitude</string>
     <string name="hint_longitude">Longitude</string>
     <string name="btn_save">Save</string>
+    <string name="btn_clear_all">Clear all</string>
     <string name="btn_calculate">Calculate</string>
     <string name="toast_fill_fields">Fill both fields</string>
     <string name="toast_invalid_number">Invalid number format</string>

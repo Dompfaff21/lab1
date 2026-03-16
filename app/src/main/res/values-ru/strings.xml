@@ -4,6 +4,7 @@
     <string name="hint_latitude">Широта</string>
     <string name="hint_longitude">Долгота</string>
     <string name="btn_save">Сохранить</string>
+    <string name="btn_clear_all">Очистить всё</string>
     <string name="btn_calculate">Вычислить</string>
     <string name="toast_fill_fields">Заполните оба поля</string>
     <string name="toast_invalid_number">Неверный формат числа</string>

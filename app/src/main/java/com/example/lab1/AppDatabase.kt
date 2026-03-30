@@ -1,12 +1,17 @@
 package com.example.lab1
+
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [Coordinate::class], version = 1)
+@Database(
+    entities = [Figure::class], // only keep Figure table
+    version = 2,               // version increased
+    exportSchema = false
+)
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun coordinateDao(): CoordinateDao
+    abstract fun figureDao(): FigureDao
 
     companion object {
         @Volatile
@@ -17,7 +22,7 @@ abstract class AppDatabase : RoomDatabase() {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "coordinates.db"
+                    "figures.db" // changed name to avoid confusion
                 ).build()
                 INSTANCE = instance
                 instance

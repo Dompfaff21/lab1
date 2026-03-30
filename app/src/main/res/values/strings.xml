@@ -3,7 +3,7 @@
     <string name="app_name">Calculator</string>
     <string name="hint_latitude">Latitude</string>
     <string name="hint_longitude">Longitude</string>
-    <string name="btn_save">Save</string>
+    <string name="btn_save">Add Point</string>
     <string name="btn_clear_all">Clear all</string>
     <string name="btn_calculate">Calculate</string>
     <string name="toast_fill_fields">Fill both fields</string>
@@ -11,4 +11,17 @@
     <string name="side_display">Lat: %.7f, Lon: %.7f</string>
     <string name="location_unavailable">Location unavailable</string>
     <string name="permission_denied">Permission denied</string>
+    <string name="saved_figures">Saved Figures</string>
+    <string name="delete_title">Delete Figure</string>
+    <string name="delete_confirmation">Delete "%s"?</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="deleted">Deleted</string>
+    <string name="area_prefix">Area:</string>
+    <string name="points_prefix">Points:</string>
+    <string name="figure_point">Point</string>
+    <string name="figure_circle">Circle</string>
+    <string name="figure_triangle">Triangle</string>
+    <string name="figure_polygon">Polygon (%d sides)</string>
+    <string name="back">Back</string>
 </resources>

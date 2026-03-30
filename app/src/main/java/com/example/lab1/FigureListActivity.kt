@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -24,6 +25,8 @@ class FigureListActivity : AppCompatActivity() {
     private lateinit var database: AppDatabase
     private lateinit var figureDao: FigureDao
     private lateinit var btnChangeLanguage: Button
+    private lateinit var titleTextView: TextView
+    private lateinit var btnBack: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         loadLanguage()
@@ -33,6 +36,8 @@ class FigureListActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.recyclerViewFigures)
         recyclerView.layoutManager = LinearLayoutManager(this)
         btnChangeLanguage = findViewById(R.id.btnChangeLanguage)
+        titleTextView = findViewById(R.id.title)
+        btnBack = findViewById(R.id.btnBack)
 
         database = AppDatabase.getInstance(this)
         figureDao = database.figureDao()
@@ -56,13 +61,17 @@ class FigureListActivity : AppCompatActivity() {
             toggleLanguage()
         }
 
-        val btnBack = findViewById<Button>(R.id.btnBack)
         btnBack.setOnClickListener { finish() }
     }
 
     override fun onResume() {
         super.onResume()
         loadFigures()
+    }
+
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        updateUITexts()
     }
 
     private fun loadFigures() {
@@ -77,7 +86,7 @@ class FigureListActivity : AppCompatActivity() {
     private fun showDeleteConfirmation(figure: Figure) {
         AlertDialog.Builder(this)
             .setTitle(R.string.delete_title)
-            .setMessage(getString(R.string.delete_confirmation, figure.figureName))
+            .setMessage(getString(R.string.delete_confirmation, figure.getLocalizedName(this))) // dynamic
             .setPositiveButton(R.string.delete) { _, _ ->
                 deleteFigure(figure)
             }
@@ -95,14 +104,15 @@ class FigureListActivity : AppCompatActivity() {
         }
     }
 
-    // Language methods
+    // ------------------ Language ------------------
+
     private fun toggleLanguage() {
         val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
         val currentLang = prefs.getString(LANGUAGE_KEY, "ru") ?: "ru"
         val newLang = if (currentLang == "ru") "en" else "ru"
         saveLanguage(newLang)
         setLocale(newLang)
-        recreate() // restart activity to apply language changes
+        // No recreate() – UI will update in onConfigurationChanged
     }
 
     private fun saveLanguage(lang: String) {
@@ -120,6 +130,13 @@ class FigureListActivity : AppCompatActivity() {
         val locale = Locale.forLanguageTag(lang)
         val localeList = LocaleListCompat.create(locale)
         AppCompatDelegate.setApplicationLocales(localeList)
+    }
+
+    private fun updateUITexts() {
+        btnChangeLanguage.setText(R.string.btn_language)
+        titleTextView.text = getString(R.string.saved_figures)
+        btnBack.text = getString(R.string.back)
+        loadFigures()   // this reloads the list, which triggers the adapter to rebind each item
     }
 
     companion object {

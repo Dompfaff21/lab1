@@ -24,8 +24,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".FigureListActivity" />
-        <activity android:name=".FigureDetailActivity" />
+        <activity android:name=".FigureListActivity"
+            android:configChanges="locale|layoutDirection" />
+        <activity android:name=".FigureDetailActivity"
+            android:configChanges="locale|layoutDirection" />
     </application>
 
 </manifest>

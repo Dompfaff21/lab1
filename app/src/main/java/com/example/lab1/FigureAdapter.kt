@@ -28,7 +28,7 @@ class FigureAdapter(
 
     override fun onBindViewHolder(holder: FigureViewHolder, position: Int) {
         val figure = figures[position]
-        holder.tvName.text = figure.figureName
+        holder.tvName.text = figure.getLocalizedName(holder.itemView.context)
         val areaText = holder.itemView.context.getString(R.string.area_prefix) + " " + String.format("%.4f", figure.area)
         holder.tvArea.text = areaText
         val pointsCount = figure.points.split(";").size

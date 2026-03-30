@@ -1,6 +1,7 @@
 package com.example.lab1
 
 import android.content.Context
+import android.content.res.Configuration
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
@@ -23,6 +24,8 @@ class FigureDetailActivity : AppCompatActivity() {
     private lateinit var adapter: PointsAdapter
     private lateinit var btnChangeLanguage: Button
 
+    private var currentFigureId = 0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         loadLanguage()
         super.onCreate(savedInstanceState)
@@ -34,17 +37,24 @@ class FigureDetailActivity : AppCompatActivity() {
         recyclerViewPoints.layoutManager = LinearLayoutManager(this)
         btnChangeLanguage = findViewById(R.id.btnChangeLanguageDetail)
 
-        val figureId = intent.getIntExtra("figure_id", 0)
-        if (figureId == 0) {
-            finish()
-            return
-        }
-
-        loadFigure(figureId)
+        currentFigureId = intent.getIntExtra("figure_id", 0)
+        if (currentFigureId == 0) finish()
+        loadFigure(currentFigureId)
 
         btnChangeLanguage.setOnClickListener {
             toggleLanguage()
         }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        updateUITexts()
+    }
+
+    private fun updateUITexts() {
+        btnChangeLanguage.setText(R.string.btn_language)
+        // Reload the figure to update name and area prefix
+        loadFigure(currentFigureId)   // fixed variable name
     }
 
     private fun loadFigure(figureId: Int) {
@@ -53,9 +63,9 @@ class FigureDetailActivity : AppCompatActivity() {
                 AppDatabase.getInstance(this@FigureDetailActivity).figureDao().getFigureById(figureId)
             }
             figure?.let {
-                tvFigureName.text = it.figureName
-                val areaText = getString(R.string.area_prefix) + " " + String.format("%.6f", it.area)
-                tvArea.text = areaText
+                // Use the context correctly
+                tvFigureName.text = it.getLocalizedName(this@FigureDetailActivity)
+                tvArea.text = getString(R.string.area_prefix) + " " + String.format("%.6f", it.area)
                 val pointsList = it.points.split(";").mapNotNull { pointStr ->
                     val parts = pointStr.split(",")
                     if (parts.size == 2) {
@@ -75,7 +85,7 @@ class FigureDetailActivity : AppCompatActivity() {
         val newLang = if (currentLang == "ru") "en" else "ru"
         saveLanguage(newLang)
         setLocale(newLang)
-        recreate()
+        // No recreate() – UI will update in onConfigurationChanged
     }
 
     private fun saveLanguage(lang: String) {
